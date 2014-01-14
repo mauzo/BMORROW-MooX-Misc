@@ -11,26 +11,44 @@ with "MooX::MethodAttributes::Role";
 
 sub BUILD { }
 
-after BUILD => sub {
-    my ($self) = @_;
-    my $class = Scalar::Util::blessed($self);
+my $map_attr = sub {
+    my ($class, $attr, $default, $connect) = @_;
 
-    my $signals = MooX::MethodAttributes
-        ->methods_with_attr($class, "Signal");
-    for my $method (keys %$signals) {
-        for (@{$$signals{$method}}) {
+    my $methods = MooX::MethodAttributes
+        ->methods_with_attr($class, $attr);
+
+    for my $method (keys %$methods) {
+        for (@{$$methods{$method}}) {
             $_ //= "";
-            my ($att, $sig) = /(?:(\w+)::)?(\w*)/ or next;
-            $att ||= "widget";
-            unless ($sig) {
-                $sig = $method;
-                $sig =~ s/^_//;
-                $sig =~ s/_/-/g;
+            my ($att, $name) = /(?:(\w+)::)?(\w*)/ or next;
+            $att //= $default;
+            unless ($name) {
+                $name = $method;
+                $name =~ s/^_//;
+                $name =~ s/_/-/g;
             }
-            $self->$att->signal_connect($sig,
-                sub { $self->$method(@_) });
+            $connect->($att, $name, $method);
         }
     }
+};
+
+after BUILD => sub {
+    my ($self)  = @_;
+    my $class   = Scalar::Util::blessed($self);
+
+    $map_attr->($class, "Signal", "widget", sub {
+        my ($att, $sig, $method) = @_;
+        $self->$att->signal_connect($sig, sub {
+            $self->$method(@_);
+        });
+    });
+    $map_attr->($class, "Action", "actions", sub {
+        my ($att, $name, $method) = @_;
+        my $act = $self->$att->get_action($name);
+        $act->signal_connect("activate", sub {
+            $self->$method(@_);
+        });
+    });
 };
 
 1;
