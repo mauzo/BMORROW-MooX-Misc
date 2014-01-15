@@ -7,7 +7,8 @@ use Moo::Role;
 
 use Scalar::Util ();
 
-with qw/ MooX::MethodAttributes::Role MooX::WeakClosure /;
+with qw/ MooX::MethodAttributes::Role MooX::WeakClosure 
+    MooX::NoGlobalDestruction /;
 
 sub BUILD { }
 
