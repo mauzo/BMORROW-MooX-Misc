@@ -7,7 +7,7 @@ use Moo::Role;
 
 use Scalar::Util ();
 
-with "MooX::MethodAttributes::Role";
+with qw/ MooX::MethodAttributes::Role MooX::WeakClosure /;
 
 sub BUILD { }
 
@@ -15,7 +15,7 @@ my $map_attr = sub {
     my ($class, $attr, $default, $connect) = @_;
 
     my $methods = MooX::MethodAttributes
-        ->methods_with_attr($class, $attr);
+        ->methods_with_attr($class, $attr, "MooX::Gtk2");
 
     for my $method (keys %$methods) {
         for (@{$$methods{$method}}) {
@@ -38,16 +38,14 @@ after BUILD => sub {
 
     $map_attr->($class, "Signal", "widget", sub {
         my ($att, $sig, $method) = @_;
-        $self->$att->signal_connect($sig, sub {
-            $self->$method(@_);
-        });
+        $self->$att->signal_connect($sig,
+            $self->weak_method($method));
     });
     $map_attr->($class, "Action", "actions", sub {
         my ($att, $name, $method) = @_;
         my $act = $self->$att->get_action($name);
-        $act->signal_connect("activate", sub {
-            $self->$method(@_);
-        });
+        $act->signal_connect("activate",
+            $self->weak_method($method));
     });
 };
 
