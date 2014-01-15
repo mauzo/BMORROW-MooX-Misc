@@ -10,9 +10,13 @@ sub weak_closure {
 }
 
 sub weak_method {
-    my ($self, $method, $default) = @_;
+    my ($self, $method, $default, $args) = @_;
     Scalar::Util::weaken($self);
-    sub { $self ? $self->$method(@_) : $default };
+    $default ||= [];
+    sub { 
+        $self ? $self->$method($args ? @$args : @_) : 
+            wantarray ? @$default : $default[-1]
+    };
 }
 
 1;
