@@ -4,11 +4,12 @@ use warnings;
 use strict;
 
 use Moo::Role;
+use MooX::MethodAttributes
+    provide => [qw/ Signal Action /];
 
 use Scalar::Util ();
 
-with qw/ MooX::MethodAttributes::Role MooX::WeakClosure 
-    MooX::NoGlobalDestruction /;
+with qw/ MooX::WeakClosure MooX::NoGlobalDestruction /;
 
 sub BUILD { }
 
@@ -39,11 +40,13 @@ after BUILD => sub {
 
     $map_attr->($class, "Signal", "widget", sub {
         my ($att, $sig, $method) = @_;
+        warn "SIGNAL [$class] [$att] [$sig] [$method]";
         $self->$att->signal_connect($sig,
             $self->weak_method($method));
     });
     $map_attr->($class, "Action", "actions", sub {
         my ($att, $name, $method) = @_;
+        warn "ACTION [$class] [$att] [$name] [$method]";
         my $act = $self->$att->get_action($name);
         $act->signal_connect("activate",
             $self->weak_method($method));
