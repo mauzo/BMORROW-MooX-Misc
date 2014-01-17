@@ -1,5 +1,8 @@
 package MooX::WeakClosure;
 
+use warnings;
+use strict;
+
 use Moo::Role;
 use Scalar::Util    ();
 
@@ -15,7 +18,7 @@ sub weak_method {
     $default ||= [];
     sub { 
         $self ? $self->$method($args ? @$args : @_) : 
-            wantarray ? @$default : $default[-1]
+            wantarray ? @$default : $$default[-1]
     };
 }
 
