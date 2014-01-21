@@ -29,7 +29,9 @@ sub apply_accessor_maker_roles {
     my ($target, @roles) = @_;
 
     my $maker = find_accessor_maker($target);
-    Moo::Role->apply_roles_to_object($maker, @roles);
+    my @need = grep !$maker->DOES($_), @roles
+        or return;
+    Moo::Role->apply_roles_to_object($maker, @need);
 }
 
 1;
