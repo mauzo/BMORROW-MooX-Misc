@@ -7,7 +7,7 @@ use strict;
 use Carp;
 use Hash::Util::FieldHash   qw/fieldhash/;
 use Module::Runtime         qw/require_module $module_name_rx/;
-use Scalar::Util            qw/reftype/;
+use Scalar::Util            qw/blessed reftype/;
 use Role::Tiny ();
 
 my $Me = "MooX::MethodAttributes";
@@ -174,6 +174,7 @@ sub attrs_for_method {
 sub methods_with_attr {
     my ($self, $class, $attr, $nsp) = @_;
     $nsp //= caller;
+    blessed $class and $class = blessed $class;
 
     my $match = qr!^(?:\Q$attr\E|\Q$nsp/$attr\E)$!;
 
