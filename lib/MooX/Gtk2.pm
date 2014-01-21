@@ -7,47 +7,56 @@ use Moo::Role;
 use MooX::MethodAttributes
     provide => [qw/ Signal Action /];
 
-use Scalar::Util ();
+use Carp            ();
+use Scalar::Util    ();
 
-with qw/ MooX::WeakClosure MooX::NoGlobalDestruction /;
+use namespace::clean;
+
+with qw/ 
+    MooX::Role::ObjectPath
+    MooX::WeakClosure 
+    MooX::NoGlobalDestruction 
+/;
+
 
 sub BUILD { }
 
 my $map_attr = sub {
-    my ($class, $attr, $default, $connect) = @_;
+    my ($self, $attr, $default, $connect) = @_;
 
     my $methods = MooX::MethodAttributes
-        ->methods_with_attr($class, $attr, "MooX::Gtk2");
+        ->methods_with_attr($self, $attr);
 
     for my $method (keys %$methods) {
         for (@{$$methods{$method}}) {
             $_ //= "";
-            my ($att, $name) = /(?:(\w+)::)?(\w*)/ or next;
+            my ($att, $name) = /^(?:(.*)::)?(\w*)$/ or next;
             $att //= $default;
+            my $obj = $self->_resolve_object_path($att)
+                or Carp::croak("Can't resolve '$att'");
             unless ($name) {
                 $name = $method;
                 $name =~ s/^_//;
                 $name =~ s/_/-/g;
             }
-            $connect->($att, $name, $method);
+            $connect->($obj, $name, $method);
         }
     }
 };
 
 after BUILD => sub {
     my ($self)  = @_;
-    my $class   = Scalar::Util::blessed($self);
 
-    $map_attr->($class, "Signal", "widget", sub {
+    $self->$map_attr("Signal", "widget", sub {
         my ($att, $sig, $method) = @_;
-        warn "SIGNAL [$class] [$att] [$sig] [$method]";
-        $self->$att->signal_connect($sig,
+        warn "SIGNAL [$self] [$att] [$sig] [$method]";
+        $att->signal_connect($sig,
             $self->weak_method($method));
     });
-    $map_attr->($class, "Action", "actions", sub {
+    $self->$map_attr("Action", "actions", sub {
         my ($att, $name, $method) = @_;
-        warn "ACTION [$class] [$att] [$name] [$method]";
-        my $act = $self->$att->get_action($name);
+        warn "ACTION [$self] [$att] [$name] [$method]";
+        my $act = $att->get_action($name);
         $act->signal_connect("activate",
             $self->weak_method($method));
     });
