@@ -30,6 +30,14 @@ sub import {
     }
 
     $self->export_mapped_attrs(%args);
+
+    no strict "refs";
+    *{"$class\::method_attrs"} = sub {
+        my ($method, @attrs) = @_;
+        my $hints = (caller 1)[10];
+        $self->parse_method_attrs_for(
+            $class, $hints, $method, @attrs);
+    };
 }
 
 sub _scope {
@@ -126,6 +134,19 @@ sub map_attrs_for_scope {
     } @attrs;
 }
 
+sub parse_method_attrs_for {
+    my ($self, $class, $hints, $method, @attrs) = @_;
+    
+    ref $method or $method = $class->can($method)
+        or croak "$class does not implement '$method'";
+    my @parsed = 
+        grep @$_, 
+        map [/^ (\w+) (?: \((.*)\) )? $/x], 
+        @attrs;
+    my @mapped = $Me->map_attrs_for_scope($hints, @parsed);
+    $Me->register_method_attrs($method, @mapped);
+}
+
 sub register_method_attrs {
     my ($self, $method, @attrs) = @_;
     ref $method or croak "Not a reference";
@@ -135,14 +156,16 @@ sub register_method_attrs {
 }
 
 sub _unwrap_modifiers {
-    my ($class, $stash, $method) = @_;
+    my ($class, $method) = @_;
 
     # XXX This is evil, but I don't see any way around it unless CMM is
     # willing to provide an API for this.
-    my $wrapped =
-        $Class::Method::Modifiers::MODIFIER_CACHE
+    $Class::Method::Modifiers::MODIFIER_CACHE
         {$class}{$method}{orig};
-    $wrapped and return $wrapped;
+}
+
+sub _lookup_sub {
+    my ($stash, $method) = @_;
 
     my $glob    = \$$stash{$method};
     # Stubs (sub foo;) create (-1) entries in the stash, but not if
@@ -161,7 +184,10 @@ sub local_method_attrs {
         grep $$_[1],
         map [$$_[0], $MAttrs{$$_[1]}],
         grep $$_[1],
-        map [$_, _unwrap_modifiers $class, $stash, $_],
+        map +(
+            [$_, _lookup_sub $stash, $_],
+            [$_, _unwrap_modifiers $class, $_],
+        ),
         keys %$stash
     };
 }
