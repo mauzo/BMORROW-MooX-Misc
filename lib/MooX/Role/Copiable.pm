@@ -55,7 +55,8 @@ sub copy_from {
         $from->_find_copiable_atts_for($self, @{$$opts{roles}});
 
     for (@atts) {
-        my ($n, $r, $w) = @$_;
+        my ($n, $r, $w, $p) = @$_;
+        $p ? $from->$p : exists($from->{$n}) or next;
         $self->$w($from->$r);
     }
 }
@@ -79,8 +80,9 @@ after generate_method => sub {
 
     my $r = $$spec{reader} // $$spec{accessor};
     my $w = $$spec{writer} // $$spec{accessor};
+    my $p = $$spec{predicate};
 
-    push @{$COPIABLE_ATTS{$into}}, [$name, $r, $w];
+    push @{$COPIABLE_ATTS{$into}}, [$name, $r, $w, $p];
     $$spec{_copiable_spec} = [$r, $into, $reqd];
 };
 
@@ -95,6 +97,9 @@ around _generate_populate_set => sub {
     my $copiable    = $$spec{_copiable_spec} or return $default;
     my ($r, $role, $reqd) = @$copiable;
 
+    my $predicate   = $$spec{predicate}
+        ? qq{ \$from->$$spec{predicate} }
+        : qq{ exists(\$from->{"\Q$name\E"}) };
     my $check_reqd  = $reqd ? qq{
         $test or die "Missing required argument: \Q$init_arg\E";
     } : "";
@@ -105,6 +110,7 @@ around _generate_populate_set => sub {
             if (!$test
                 && \$from
                 && \$from->DOES("\Q$role\E")
+                && $predicate
             ) {
                 \$args->{"\Q$init_arg\E"} = \$from->$r;
             }
