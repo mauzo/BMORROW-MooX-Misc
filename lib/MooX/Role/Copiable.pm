@@ -19,6 +19,7 @@ on_application {
     apply_accessor_maker_roles $to, "$Me\::Accessor";
 };
 
+# $for is the class we are copying *to* ($self in copy_from).
 sub _find_copiable_atts_for {
     my ($self, $for, @roles) = @_;
 
@@ -39,20 +40,26 @@ sub _copy_init_args_for {
     $self->_find_copiable_atts_for($for, @roles);
 }
 
+my $filter = sub {
+    my ($item, $list) = @_;
+    my @list = $list ? ref $list ? @$list : $list : ()
+        or return;
+    my $rv = scalar grep $_ eq $item, @list;
+    $rv;
+};
+
 sub copy_from {
     my ($self, $from, @args) = @_;
 
     $from->DOES($Me) or croak "$from is not $Me";
 
     my $opts = (@args == 1 && ref $args[0])
-        ? $args[0] : { only => \@args };
+        ? $args[0] : { roles => \@args };
 
-    my %exclude; @exclude{@{$$opts{exclude} || []}} = ();
     my @atts =
-        grep !exists $exclude{$$_[0]},
-        $from->_find_copiable_atts_for($self, @{$$opts{only}});
-
-    warn "COPY FROM [$from] TO [$self]: " . pp [map $$_[0], @atts];
+        grep !($filter->($$_[0], $$opts{exclude})),
+        grep $filter->($$_[0], $$opts{only}) // 1,
+        $from->_find_copiable_atts_for($self, @{$$opts{roles}});
 
     for (@atts) {
         my ($n, $r, $w) = @$_;
