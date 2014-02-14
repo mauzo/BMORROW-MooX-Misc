@@ -3,7 +3,7 @@ package MooX::AccessorMaker;
 use warnings;
 use strict;
 
-use Exporter "import";
+use Exporter ();
 our @EXPORT = qw/find_accessor_maker apply_accessor_maker_roles/;
 
 sub find_accessor_maker {
@@ -31,7 +31,23 @@ sub apply_accessor_maker_roles {
     my $maker = find_accessor_maker($target);
     my @need = grep !$maker->DOES($_), @roles
         or return;
+
+    require Moo::Role;
     Moo::Role->apply_roles_to_object($maker, @need);
+}
+
+sub import {
+    my ($self, @args) = @_;
+    my $to = caller;
+
+    my (@export, $apply);
+    while (my $arg = shift @args) {
+        if ($arg eq "apply") { $apply = shift @args }
+        else { push @export, $arg }
+    }
+    
+    $self->Exporter::export($to, @export);
+    $apply and apply_accessor_maker_roles $to, @$apply;
 }
 
 1;

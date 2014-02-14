@@ -1,30 +1,17 @@
-package MooX::Role::Coercer;
+package MooX::MakerRole::Coercer;
 
 use Moo::Role;
 
-use MooX::CaptainHook   qw/on_application/;
-use MooX::AccessorMaker qw/apply_accessor_maker_roles/;
-
-use Carp;
 use Data::Dump      qw/pp/;
 use Module::Runtime qw/use_package_optimistically/;
 use Scalar::Util    qw/blessed/;
+use Sub::Quote      qw/quote_sub/;
 
 use namespace::clean;
-
-BEGIN { $SIG{__DIE__} = \&Carp::confess }
-
-my $Me = __PACKAGE__;
-
-on_application {
-    my ($to, $from) = @{$_[0]};
-    apply_accessor_maker_roles $to, "$Me\::Accessor";
-};
 
 my $check_is = sub {
     my ($pkg, $for) = @_;
 
-    Carp::cluck "CHECK_IS [$pkg] [$for]";
     use_package_optimistically $pkg;
     my $is = Role::Tiny->is_role($pkg) ? "DOES" : "isa";
     my $qto = qq{"\Q$pkg\E"};
@@ -33,12 +20,6 @@ my $check_is = sub {
             && \$_[0]->$is($qto) ) 
     };
 };
-
-package MooX::Role::Coercer::Accessor;
-
-use Sub::Quote  qw/quote_sub/;
-
-use Moo::Role;
 
 before generate_method => sub {
     my ($self, $into, $name, $spec) = @_;
@@ -54,7 +35,7 @@ before generate_method => sub {
     if ((my $to = $$spec{coerce_to}) && !$$spec{coercer}) {
         my $check = $check_is->($to, qq{"\Q$into\E"});
         $$spec{coerce} = quote_sub qq{ 
-            # MooX::Role::Coercer
+            # MooX::MakerRole::Coercer
             do {
                 warn sprintf "COERCE [%s] TO [%s] FOR [%s]",
                     Data::Dump::pp(\$_[0]), "\Q$to\E", "\Q$into\E";
@@ -82,7 +63,7 @@ my $do_coercer = sub {
     }
 
     local $$spec{coerce} = quote_sub qq{
-        # MooX::Role::Coercer
+        # MooX::MakerRole::Coercer
         do {
             warn sprintf "COERCE [%s] TO [%s] VIA [%s] FOR [%s]",
                 Data::Dump::pp(\$_[0]), $qto, "$cer", $me;
