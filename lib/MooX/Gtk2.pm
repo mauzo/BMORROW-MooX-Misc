@@ -18,7 +18,7 @@ use namespace::clean;
 
 with qw/ 
     MooX::Role::ObjectPath
-    MooX::WeakClosure 
+    MooX::Role::WeakClosure 
     MooX::NoGlobalDestruction 
 /;
 
@@ -30,7 +30,7 @@ on_application {
 sub BUILD { }
 
 my $map_attr = sub {
-    my ($self, $attr, $default, $connect) = @_;
+    my ($self, $attr, $default, $map) = @_;
 
     my $methods = MooX::MethodAttributes
         ->methods_with_attr($self, $attr);
@@ -47,26 +47,36 @@ my $map_attr = sub {
                 $name =~ s/^_//;
                 $name =~ s/_/-/g;
             }
-            $connect->($obj, $name, $method);
+            $map and ($obj, $name) = $map->($obj, $name);
+            my $id;
+            $id = $obj->signal_connect($name,
+                $self->weak_method($method, sub {
+                    $obj->signal_handler_disconnect($id);
+                }),
+            );
         }
     }
+};
+
+my $sig_connect = sub {
+    my ($obj, $sig, $self, $method) = @_;
+    Scalar::Util::weaken $obj;
+    my $id;
+    $id = $obj->signal_connect($sig,
+        $self->weak_method($method, sub { 
+            $obj->signal_handler_disconnect($id);
+        }));
 };
 
 after BUILD => sub {
     my ($self)  = @_;
 
-    $self->$map_attr("Signal", "widget", sub {
-        my ($att, $sig, $method) = @_;
-        warn "SIGNAL [$self] [$att] [$sig] [$method]";
-        $att->signal_connect($sig,
-            $self->weak_method($method));
-    });
+    $self->$map_attr("Signal", "widget");
     $self->$map_attr("Action", "actions", sub {
-        my ($att, $name, $method) = @_;
-        warn "ACTION [$self] [$att] [$name] [$method]";
-        my $act = $att->get_action($name);
-        $act->signal_connect("activate",
-            $self->weak_method($method));
+        my ($att, $name) = @_;
+        my $act = $att->get_action($name)
+            or Carp::croak("Can't find action '$name' on '$att'");
+        ($act, "activate");
     });
 };
 
@@ -92,7 +102,7 @@ around generate_method => sub {
 
     $reader && $writer or Carp::croak("Attribute '$name' is not rw");
 
-    s/^\+//, s/^_// for $name;
+    s/^\+// for $name;
 
     my $trigger = "_trigger_$name";
     my $mod     = \&Class::Method::Modifiers::install_modifier;
@@ -116,12 +126,15 @@ around generate_method => sub {
         my $obj = $obj{$self} = $self->_resolve_object_path($path);
         Scalar::Util::weaken $obj{$self};
 
-        $obj->signal_connect("notify::$prop", 
+        my $id;
+        $id = $obj->signal_connect("notify::$prop", 
             $self->weak_closure(sub {
                 my ($self) = @_;
-                my $value = $obj{$self}->get_property($prop);
+                my $value = $obj->get_property($prop);
                 $value eq $self->$reader and return;
                 $self->$writer($value);
+            }, sub {
+               $obj->signal_handler_disconnect($id);
             }));
         $obj->set_property($prop, $self->$reader);
     });
