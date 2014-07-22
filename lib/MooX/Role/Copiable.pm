@@ -11,6 +11,8 @@ use Scalar::Util    qw/blessed/;
 
 use namespace::clean;
 
+require mro;
+
 my $Me = __PACKAGE__;
 my %COPIABLE_ATTS;
 
@@ -23,13 +25,23 @@ on_application {
 sub _find_copiable_atts_for {
     my ($self, $for, @roles) = @_;
 
+    # Although this is called @roles, in the normal case it will be our
+    # own class name (which is a role at least to the extent of
+    # answering to ->DOES).
     @roles or @roles = blessed $self // $self;
 
+        # check the predicates
     grep { my $p = $$_[3]; $self->$p }
+        # find the copiable atts for these roles
     map @$_,
     map $COPIABLE_ATTS{$_} || (),
+        # include only the roles we have in common with $for
     grep $for->DOES($_),
+        # find all roles applied to these classes
     map keys %{$Role::Tiny::APPLIED_TO{$_}},
+        # also include the superclasses of any classes
+    map @{mro::get_linear_isa $_},
+        # ignore any passed-in roles we don't implement
     grep $self->DOES($_),
     @roles;
 }
@@ -105,7 +117,8 @@ after generate_method => sub {
                 grep $$_[0] eq $name,
                 @{$COPIABLE_ATTS{$_}}
             }
-            keys %{$Role::Tiny::APPLIED_TO{$role}};
+            map keys %{$Role::Tiny::APPLIED_TO{$_}},
+            @{mro::get_linear_isa $into};
         warn "ADJUST [$name] FROM [$role] FOR [$into]";
         $n != 1 and croak 
             "Attribute '$name' on '$into' does not have a unique source";
