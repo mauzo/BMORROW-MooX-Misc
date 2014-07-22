@@ -46,27 +46,13 @@ sub _find_copiable_atts_for {
     @roles;
 }
 
-my $filter = sub {
-    my ($item, $list) = @_;
-    my @list = $list ? ref $list ? @$list : $list : ()
-        or return;
-    my $rv = scalar grep $_ eq $item, @list;
-    $rv;
-};
-
 sub copy_from {
-    my ($self, $from, @args) = @_;
+    my ($self, $from, @roles) = @_;
 
     blessed $from && $from->DOES($Me) 
         or croak "$from is not $Me";
 
-    my $opts = (@args == 1 && ref $args[0])
-        ? $args[0] : { roles => \@args };
-
-    my @atts =
-        grep !($filter->($$_[0], $$opts{exclude})),
-        grep $filter->($$_[0], $$opts{only}) // 1,
-        $from->_find_copiable_atts_for($self, @{$$opts{roles}});
+    my @atts = $from->_find_copiable_atts_for($self, @roles);
 
     for (@atts) {
         my ($n, $r, $w, $p, $c, undef, $deep) = @$_;
