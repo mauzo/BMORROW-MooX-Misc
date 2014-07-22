@@ -30,8 +30,6 @@ sub _find_copiable_atts_for {
     # answering to ->DOES).
     @roles or @roles = blessed $self // $self;
 
-        # check the predicates
-    grep { my $p = $$_[3]; $self->$p }
         # find the copiable atts for these roles
     map @$_,
     map $COPIABLE_ATTS{$_} || (),
@@ -56,15 +54,18 @@ sub copy_from {
 
     for (@atts) {
         my ($n, $r, $w, $p, $c, undef, $deep) = @$_;
+
+        if (!$from->$p) {
+            warn "CLEARING [$self][$n]($p) VIA [$c]";
+            $self->$c;
+            next;
+        }
+
         my $f = $from->$r;
         warn "COPY [$f] TO [$self][$n] ($p)";
         if (!$deep) {
             warn "SETTING VIA [$w]";
             $self->$w($f);
-        }
-        elsif (!$f) {
-            warn "CLEARING VIA [$c]";
-            $self->$c;
         }
         elsif ($self->$p) {
             warn "COPYING VIA [$r]";
