@@ -38,7 +38,7 @@ before generate_method => sub {
             # MooX::MakerRole::Coercer
             do {
                 warn sprintf "COERCE [%s] TO [%s] FOR [%s]",
-                    Data::Dump::pp(\$_[0]), "\Q$to\E", "\Q$into\E";
+                    \$_[0], "\Q$to\E", "\Q$into\E";
                 $check ? \$_[0] : "\Q$to\E"->new(\$_[0]);
             }
         };
@@ -59,14 +59,14 @@ my $do_coercer = sub {
     my $qto     = q{""};
     if (my $to = $$spec{coerce_to}) {
         $check  = $check_is->($to, $me);
-        $qto    = qq{"\Q$to\E"};
+        $qto    = qq{" TO [\Q$to\E]"};
     }
 
     local $$spec{coerce} = quote_sub qq{
         # MooX::MakerRole::Coercer
         do {
-            warn sprintf "COERCE [%s] TO [%s] VIA [%s] FOR [%s]",
-                Data::Dump::pp(\$_[0]), $qto, "$cer", $me;
+            warn sprintf "COERCE [%s]%s VIA [%s] FOR [%s]",
+                \$_[0], $qto, "$cer", $me;
             ($check ? \$_[0] : $me\->$cer(\$_[0], $qto));
         }
     };
