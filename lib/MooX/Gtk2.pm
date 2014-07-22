@@ -38,7 +38,7 @@ my $map_attr = sub {
     for my $method (keys %$methods) {
         for (@{$$methods{$method}}) {
             $_ //= "";
-            my ($att, $name) = /^(?:(.*)::)?(\w*)$/ or next;
+            my ($att, $name) = /^(?:(.*)\.)?([\w:]*)$/ or next;
             $att //= $default;
             my $obj = $self->_resolve_object_path($att)
                 or Carp::croak("Can't resolve '$att'");
@@ -89,7 +89,7 @@ around generate_method => sub {
     my ($into, $name, $spec) = @args;
 
     my $pspec = $$spec{gtk_prop} or return $self->$orig(@args);
-    my ($path, $prop) = $pspec =~ /^(.*)::([\w-]+)$/
+    my ($path, $prop) = $pspec =~ /^(.*)\.([\w-]+)$/
         or Carp::croak("Bad property spec '$pspec'");
 
     $$spec{trigger} = 1;
