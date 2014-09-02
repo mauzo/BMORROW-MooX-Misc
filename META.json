@@ -1,0 +1,95 @@
+{
+   "abstract" : "Assorted small Moo extensions",
+   "author" : [
+      "Ben Morrow <ben@morrow.me.uk>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.4205",
+   "license" : [
+      "bsd"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "BMORROW-MooX-Misc",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::More" : "0.96"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.38"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Data::Dump" : "0",
+            "Module::Runtime" : "0",
+            "Moo" : "0",
+            "MooX::CaptainHook" : "0",
+            "Regexp::Common" : "0",
+            "namespace::clean" : "0"
+         }
+      }
+   },
+   "provides" : {
+      "BMORROW::MooX::Misc" : {
+         "file" : "lib/BMORROW/MooX/Misc.pm"
+      },
+      "MooX::AccessorMaker" : {
+         "file" : "lib/MooX/AccessorMaker.pm"
+      },
+      "MooX::Gtk2" : {
+         "file" : "lib/MooX/Gtk2.pm"
+      },
+      "MooX::Gtk2::AccessorMaker" : {
+         "file" : "lib/MooX/Gtk2.pm"
+      },
+      "MooX::MakerRole::Coercer" : {
+         "file" : "lib/MooX/MakerRole/Coercer.pm"
+      },
+      "MooX::MakerRole::IgnoreUndef" : {
+         "file" : "lib/MooX/MakerRole/IgnoreUndef.pm"
+      },
+      "MooX::MethodAttributes" : {
+         "file" : "lib/MooX/MethodAttributes.pm"
+      },
+      "MooX::MethodAttributes::Use" : {
+         "file" : "lib/MooX/MethodAttributes/Use.pm"
+      },
+      "MooX::NoGlobalDestruction" : {
+         "file" : "lib/MooX/NoGlobalDestruction.pm"
+      },
+      "MooX::Role::Copiable" : {
+         "file" : "lib/MooX/Role/Copiable.pm"
+      },
+      "MooX::Role::Copiable::Accessor" : {
+         "file" : "lib/MooX/Role/Copiable.pm"
+      },
+      "MooX::Role::ObjectPath" : {
+         "file" : "lib/MooX/Role/ObjectPath.pm"
+      },
+      "MooX::Role::Signal" : {
+         "file" : "lib/MooX/Role/Signal.pm"
+      },
+      "MooX::Role::WeakClosure" : {
+         "file" : "lib/MooX/Role/WeakClosure.pm"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://rt.cpan.org/Public/Dist/Display.html?Name=BMORROW-MooX-Misc"
+      },
+      "license" : [
+         "http://opensource.org/licenses/bsd-license.php"
+      ],
+      "repository" : {
+         "url" : "http://github.com/mauzo/BMORROW-MooX-Misc"
+      }
+   },
+   "version" : "0"
+}

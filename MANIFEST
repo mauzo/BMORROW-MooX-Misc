@@ -1,0 +1,18 @@
+Build.PL
+Changes
+lib/BMORROW/MooX/Misc.pm
+lib/MooX/AccessorMaker.pm
+lib/MooX/Gtk2.pm
+lib/MooX/MakerRole/Coercer.pm
+lib/MooX/MakerRole/IgnoreUndef.pm
+lib/MooX/MethodAttributes.pm
+lib/MooX/MethodAttributes/Use.pm
+lib/MooX/NoGlobalDestruction.pm
+lib/MooX/Role/Copiable.pm
+lib/MooX/Role/ObjectPath.pm
+lib/MooX/Role/Signal.pm
+lib/MooX/Role/WeakClosure.pm
+MANIFEST			This list of files
+META.json
+META.yml
+t/00use.t
