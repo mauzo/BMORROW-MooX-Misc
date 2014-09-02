@@ -16,6 +16,7 @@ name: BMORROW-MooX-Misc
 provides:
   BMORROW::MooX::Misc:
     file: lib/BMORROW/MooX/Misc.pm
+    version: '1'
   MooX::AccessorMaker:
     file: lib/MooX/AccessorMaker.pm
   MooX::Gtk2:
@@ -53,4 +54,4 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=BMORROW-MooX-Misc
   license: http://opensource.org/licenses/bsd-license.php
   repository: http://github.com/mauzo/BMORROW-MooX-Misc
-version: '0'
+version: '1'

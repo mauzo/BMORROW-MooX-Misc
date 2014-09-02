@@ -37,7 +37,8 @@
    },
    "provides" : {
       "BMORROW::MooX::Misc" : {
-         "file" : "lib/BMORROW/MooX/Misc.pm"
+         "file" : "lib/BMORROW/MooX/Misc.pm",
+         "version" : "1"
       },
       "MooX::AccessorMaker" : {
          "file" : "lib/MooX/AccessorMaker.pm"
@@ -91,5 +92,5 @@
          "url" : "http://github.com/mauzo/BMORROW-MooX-Misc"
       }
    },
-   "version" : "0"
+   "version" : "1"
 }
